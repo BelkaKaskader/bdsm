@@ -14,3 +14,15 @@ CREATE TABLE IF NOT EXISTS "Сводная" (
     "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
     "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
 ); 
+
+-- Создание таблицы Users для аутентификации
+CREATE TABLE IF NOT EXISTS "Users" (
+    id UUID PRIMARY KEY,
+    "username" VARCHAR(255) UNIQUE NOT NULL,
+    "password" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) UNIQUE,
+    "role" VARCHAR(50) DEFAULT 'user',
+    "isActive" BOOLEAN DEFAULT TRUE,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+); 

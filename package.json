@@ -11,12 +11,15 @@
     "import-data": "node scripts/importExcel.js C:\\Games\\pyProj\\bdsm\\otchety\\data.xlsx",
     "import-all": "node scripts/importExcel.js",
     "clear-svodnaya": "node scripts/clearSvodnaya.js",
-    "check-data": "node scripts/checkData.js"
+    "check-data": "node scripts/checkData.js",
+    "auth-test": "node scripts/auth.js",
+    "init-admin": "node scripts/initUsers.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -31,4 +34,4 @@
   "devDependencies": {
     "nodemon": "^2.0.22"
   }
-} 
+}
