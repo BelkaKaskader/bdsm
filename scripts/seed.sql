@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS "Users" (
     "password" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) UNIQUE,
     "role" VARCHAR(50) DEFAULT 'user',
-    "isActive" BOOLEAN DEFAULT TRUE,
+    "isBlocked" BOOLEAN DEFAULT FALSE,
+    "resetPasswordToken" VARCHAR(255),
+    "resetPasswordExpires" TIMESTAMP WITH TIME ZONE,
+    "createdBy" UUID,
     "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
     "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
 ); 

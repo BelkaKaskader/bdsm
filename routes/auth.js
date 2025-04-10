@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
@@ -9,47 +10,81 @@ const adminAuth = require('../middleware/adminAuth');
 // Регистрация нового пользователя (только для администраторов)
 router.post('/register', auth, adminAuth, async (req, res) => {
     try {
+        console.log('=== Начало регистрации ===');
+        console.log('Тело запроса:', req.body);
         const { username, email, password, role = 'user' } = req.body;
 
+        console.log('Проверка входных данных:');
+        console.log('- username:', username);
+        console.log('- email:', email);
+        console.log('- role:', role);
+
         // Проверка существования пользователя
-        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        console.log('Поиск существующего пользователя...');
+        const existingUser = await User.findOne({
+            where: {
+                [Op.or]: [
+                    { username: username },
+                    { email: email }
+                ]
+            }
+        });
+
+        console.log('Результат поиска:', existingUser ? 'Пользователь найден' : 'Пользователь не найден');
+
         if (existingUser) {
-            return res.status(400).json({ message: 'Пользователь уже существует' });
+            console.log('Отказ: пользователь уже существует');
+            return res.status(400).json({ 
+                message: 'Пользователь уже существует',
+                details: existingUser.username === username ? 'Username занят' : 'Email занят'
+            });
         }
 
         // Создание нового пользователя
-        const user = new User({ 
-            username, 
-            email, 
-            password, 
+        console.log('Создание нового пользователя...');
+        const user = await User.create({
+            username,
+            email,
+            password,
             role,
-            createdBy: req.user._id // Добавляем информацию о том, кто создал пользователя
+            createdBy: req.user.id
         });
-        await user.save();
 
-        res.status(201).json({ 
+        console.log('Пользователь успешно создан:', user.id);
+
+        res.status(201).json({
             message: 'Пользователь успешно создан',
-            user: { 
-                id: user._id, 
-                username, 
-                email,
-                role 
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Ошибка при регистрации пользователя' });
+        console.error('Ошибка при регистрации:', error);
+        res.status(500).json({ 
+            message: 'Ошибка при регистрации пользователя',
+            error: error.message,
+            stack: error.stack
+        });
     }
 });
 
 // Авторизация
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
+
+        // Проверка входных данных
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Пожалуйста, введите имя пользователя и пароль' });
+        }
 
         // Поиск пользователя
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { username } });
         if (!user) {
-            return res.status(401).json({ message: 'Неверный email или пароль' });
+            return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
         // Проверка блокировки
@@ -60,13 +95,13 @@ router.post('/login', async (req, res) => {
         // Проверка пароля
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Неверный email или пароль' });
+            return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
         // Создание токена
         const token = jwt.sign(
             { 
-                userId: user._id,
+                userId: user.id,
                 role: user.role 
             }, 
             process.env.JWT_SECRET, 
@@ -74,15 +109,17 @@ router.post('/login', async (req, res) => {
         );
 
         res.json({ 
+            message: 'Авторизация успешна',
             user: { 
-                id: user._id, 
+                id: user.id, 
                 username: user.username, 
-                email,
+                email: user.email,
                 role: user.role 
             }, 
             token 
         });
     } catch (error) {
+        console.error('Ошибка при авторизации:', error);
         res.status(500).json({ message: 'Ошибка при авторизации' });
     }
 });
@@ -106,95 +143,185 @@ router.get('/profile', auth, async (req, res) => {
 // Получение списка пользователей (только для администраторов)
 router.get('/users', auth, adminAuth, async (req, res) => {
     try {
-        const users = await User.find({}, { password: 0 });
+        console.log('Запрос на получение пользователей');
+        console.log('User role:', req.user.role);
+        
+        const users = await User.findAll({
+            attributes: ['id', 'username', 'email', 'role', 'isBlocked', 'createdAt', 'updatedAt']
+        });
+        
+        console.log('Найдено пользователей:', users.length);
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: 'Ошибка при получении списка пользователей' });
+        console.error('Ошибка при получении списка пользователей:', error);
+        res.status(500).json({ 
+            message: 'Ошибка при получении списка пользователей',
+            error: error.message 
+        });
     }
 });
 
 // Удаление пользователя (только для администраторов)
 router.delete('/users/:userId', auth, adminAuth, async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId);
+        console.log('=== Начало удаления пользователя ===');
+        console.log('ID пользователя для удаления:', req.params.userId);
+
+        console.log('Поиск пользователя...');
+        const user = await User.findOne({
+            where: { id: req.params.userId }
+        });
+
         if (!user) {
+            console.log('Пользователь не найден');
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
 
+        console.log('Пользователь найден:', {
+            id: user.id,
+            username: user.username,
+            role: user.role
+        });
+
         // Запрещаем удалять последнего администратора
         if (user.role === 'admin') {
-            const adminCount = await User.countDocuments({ role: 'admin' });
+            console.log('Проверка количества администраторов...');
+            const adminCount = await User.count({
+                where: { role: 'admin' }
+            });
+            
+            console.log('Количество администраторов:', adminCount);
+            
             if (adminCount <= 1) {
+                console.log('Отказ: попытка удаления последнего администратора');
                 return res.status(400).json({ message: 'Невозможно удалить последнего администратора' });
             }
         }
 
-        await user.remove();
+        console.log('Удаление пользователя...');
+        await user.destroy();
+        console.log('Пользователь успешно удален');
+
         res.json({ message: 'Пользователь успешно удален' });
     } catch (error) {
-        res.status(500).json({ message: 'Ошибка при удалении пользователя' });
+        console.error('Ошибка при удалении пользователя:', error);
+        res.status(500).json({ 
+            message: 'Ошибка при удалении пользователя',
+            error: error.message,
+            stack: error.stack
+        });
     }
 });
 
 // Изменение роли пользователя (только для администраторов)
 router.patch('/users/:userId/role', auth, adminAuth, async (req, res) => {
     try {
+        console.log('=== Начало изменения роли ===');
+        console.log('ID пользователя:', req.params.userId);
+        console.log('Новая роль:', req.body.role);
+
         const { role } = req.body;
-        const user = await User.findById(req.params.userId);
+        
+        if (!role || !['admin', 'user'].includes(role)) {
+            console.log('Ошибка: неверная роль:', role);
+            return res.status(400).json({ message: 'Роль должна быть "admin" или "user"' });
+        }
+
+        console.log('Поиск пользователя...');
+        const user = await User.findOne({
+            where: { id: req.params.userId }
+        });
         
         if (!user) {
+            console.log('Пользователь не найден');
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
 
+        console.log('Текущая роль пользователя:', user.role);
+
         // Запрещаем изменять роль последнего администратора
         if (user.role === 'admin' && role !== 'admin') {
-            const adminCount = await User.countDocuments({ role: 'admin' });
+            console.log('Проверка количества администраторов...');
+            const adminCount = await User.count({
+                where: { role: 'admin' }
+            });
+            
+            console.log('Количество администраторов:', adminCount);
+            
             if (adminCount <= 1) {
+                console.log('Отказ: последний администратор');
                 return res.status(400).json({ message: 'Невозможно изменить роль последнего администратора' });
             }
         }
 
+        console.log('Обновление роли...');
         user.role = role;
         await user.save();
+
+        console.log('Роль успешно обновлена');
 
         res.json({ 
             message: 'Роль пользователя успешно изменена',
             user: {
-                id: user._id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 role: user.role
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Ошибка при изменении роли пользователя' });
+        console.error('Ошибка при изменении роли:', error);
+        res.status(500).json({ 
+            message: 'Ошибка при изменении роли пользователя',
+            error: error.message,
+            stack: error.stack
+        });
     }
 });
 
 // Блокировка/разблокировка пользователя (только для администраторов)
 router.patch('/users/:userId/block', auth, adminAuth, async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId);
+        console.log('=== Начало блокировки/разблокировки ===');
+        console.log('ID пользователя:', req.params.userId);
+        
+        console.log('Поиск пользователя...');
+        const user = await User.findOne({
+            where: { id: req.params.userId }
+        });
         
         if (!user) {
+            console.log('Пользователь не найден');
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
 
+        console.log('Текущий статус пользователя:', user.isBlocked ? 'заблокирован' : 'активен');
+
         // Запрещаем блокировать последнего администратора
         if (user.role === 'admin') {
-            const adminCount = await User.countDocuments({ role: 'admin' });
+            console.log('Проверка количества администраторов...');
+            const adminCount = await User.count({
+                where: { role: 'admin' }
+            });
+            
+            console.log('Количество администраторов:', adminCount);
+            
             if (adminCount <= 1) {
+                console.log('Отказ: последний администратор');
                 return res.status(400).json({ message: 'Невозможно заблокировать последнего администратора' });
             }
         }
 
+        console.log('Изменение статуса блокировки...');
         user.isBlocked = !user.isBlocked;
         await user.save();
+
+        console.log('Статус успешно обновлен:', user.isBlocked ? 'заблокирован' : 'разблокирован');
 
         res.json({ 
             message: `Пользователь успешно ${user.isBlocked ? 'заблокирован' : 'разблокирован'}`,
             user: {
-                id: user._id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 role: user.role,
@@ -202,7 +329,12 @@ router.patch('/users/:userId/block', auth, adminAuth, async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Ошибка при блокировке/разблокировке пользователя' });
+        console.error('Ошибка при блокировке/разблокировке:', error);
+        res.status(500).json({ 
+            message: 'Ошибка при блокировке/разблокировке пользователя',
+            error: error.message,
+            stack: error.stack
+        });
     }
 });
 

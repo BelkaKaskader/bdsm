@@ -55,8 +55,8 @@ async function registerUser(username, password, email, role = 'user') {
         // Добавление пользователя в базу данных
         const result = await client.query(
             `INSERT INTO "Users" (
-                id, username, password, email, role, "isActive", "createdAt", "updatedAt"
-            ) VALUES ($1, $2, $3, $4, $5, TRUE, NOW(), NOW()) RETURNING id, username, email, role, "isActive"`,
+                id, username, password, email, role, "isBlocked", "createdAt", "updatedAt"
+            ) VALUES ($1, $2, $3, $4, $5, FALSE, NOW(), NOW()) RETURNING id, username, email, role, "isBlocked"`,
             [uuidv4(), username, hashedPassword, email, role]
         );
         
@@ -90,7 +90,7 @@ async function authenticateUser(username, password) {
         const user = result.rows[0];
         
         // Проверка активности пользователя
-        if (!user.isActive) {
+        if (user.isBlocked) {
             console.log('Пользователь заблокирован');
             return null;
         }
@@ -121,7 +121,7 @@ async function getAllUsers() {
     
     try {
         const result = await client.query(
-            'SELECT id, username, email, role, "isActive", "createdAt", "updatedAt" FROM "Users"'
+            'SELECT id, username, email, role, "isBlocked", "createdAt", "updatedAt" FROM "Users"'
         );
         
         return result.rows;
@@ -169,16 +169,16 @@ async function changePassword(username, oldPassword, newPassword) {
 /**
  * Блокировка/разблокировка пользователя
  * @param {string} userId - идентификатор пользователя
- * @param {boolean} isActive - статус активности
+ * @param {boolean} isBlocked - статус блокировки
  * @returns {Promise<boolean>} - успешность операции
  */
-async function setUserActive(userId, isActive) {
+async function setUserActive(userId, isBlocked) {
     const client = await pool.connect();
     
     try {
         await client.query(
-            'UPDATE "Users" SET "isActive" = $1, "updatedAt" = NOW() WHERE id = $2',
-            [isActive, userId]
+            'UPDATE "Users" SET "isBlocked" = $1, "updatedAt" = NOW() WHERE id = $2',
+            [isBlocked, userId]
         );
         
         return true;

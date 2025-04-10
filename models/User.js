@@ -32,8 +32,12 @@ const User = sequelize.define('User', {
         }
     },
     role: {
-        type: DataTypes.ENUM('user', 'admin'),
-        defaultValue: 'user'
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'user',
+        validate: {
+            isIn: [['user', 'admin']]
+        }
     },
     isBlocked: {
         type: DataTypes.BOOLEAN,
@@ -47,7 +51,7 @@ const User = sequelize.define('User', {
     },
     createdBy: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'Users',
             key: 'id'
