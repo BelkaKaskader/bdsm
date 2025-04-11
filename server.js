@@ -5,6 +5,7 @@ const sequelize = require('./config/database');
 const User = require('./models/User');
 
 const authRoutes = require('./routes/auth');
+const dataRoutes = require('./routes/data');
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/data', dataRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to BDSM API' });

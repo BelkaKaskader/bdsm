@@ -1,19 +1,22 @@
 -- Создание таблицы Сводная, если она не существует
 CREATE TABLE IF NOT EXISTS "Сводная" (
-    id UUID PRIMARY KEY,
-    "код_окэд" VARCHAR(255) NOT NULL,
-    "вид_деятельности" VARCHAR(255) NOT NULL,
-    "количество_нп" INTEGER NOT NULL,
-    "средняя_численность_работников" NUMERIC(15,2) NOT NULL,
-    "Сумма_по_полю_ФОТт" DECIMAL(15,2) NOT NULL,
-    "Сумма_по_полю_ср.зп" DECIMAL(15,2) NOT NULL,
-    "ипн" DECIMAL(15,2) NOT NULL,
-    "сн" DECIMAL(15,2) NOT NULL,
-    "сумма_налогов" DECIMAL(15,2) NOT NULL,
-    "удельный_вес" DECIMAL(15,2) NOT NULL,
-    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
-); 
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "код_окэд" VARCHAR(255) UNIQUE NOT NULL,
+    "вид_деятельности" TEXT NOT NULL,
+    "количество_нп" INTEGER NOT NULL DEFAULT 0,
+    "средняя_численность_работников" TEXT,
+    "Сумма_по_полю_ФОТт" DECIMAL(15,2) DEFAULT 0,
+    "Сумма_по_полю_ср.зп" DECIMAL(15,2) DEFAULT 0,
+    "ипн" DECIMAL(15,2) DEFAULT 0,
+    "сн" DECIMAL(15,2) DEFAULT 0,
+    "сумма_налогов" DECIMAL(15,2) DEFAULT 0,
+    "удельный_вес" DECIMAL(15,2) DEFAULT 0,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Создание индекса для быстрого поиска по коду ОКЭД
+CREATE INDEX IF NOT EXISTS idx_svodnaya_kod_oked ON "Сводная" ("код_окэд");
 
 -- Создание таблицы Users для аутентификации
 CREATE TABLE IF NOT EXISTS "Users" (
