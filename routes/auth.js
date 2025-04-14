@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
-const User = require('../models/User');
+const { User } = require('../models');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 
@@ -76,47 +76,38 @@ router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Проверка входных данных
-        if (!username || !password) {
-            return res.status(400).json({ message: 'Пожалуйста, введите имя пользователя и пароль' });
-        }
-
-        // Поиск пользователя
+        // Находим пользователя
         const user = await User.findOne({ where: { username } });
         if (!user) {
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
-        // Проверка блокировки
+        // Проверяем, не заблокирован ли пользователь
         if (user.isBlocked) {
-            return res.status(403).json({ message: 'Аккаунт заблокирован' });
+            return res.status(403).json({ message: 'Пользователь заблокирован' });
         }
 
-        // Проверка пароля
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
+        // Проверяем пароль
+        const isValidPassword = await user.validatePassword(password);
+        if (!isValidPassword) {
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
-        // Создание токена
+        // Создаем JWT токен
         const token = jwt.sign(
-            { 
-                userId: user.id,
-                role: user.role 
-            }, 
-            process.env.JWT_SECRET, 
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
             { expiresIn: '12h' }
         );
 
-        res.json({ 
-            message: 'Авторизация успешна',
-            user: { 
-                id: user.id, 
-                username: user.username, 
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
                 email: user.email,
-                role: user.role 
-            }, 
-            token 
+                role: user.role
+            }
         });
     } catch (error) {
         console.error('Ошибка при авторизации:', error);
@@ -127,13 +118,11 @@ router.post('/login', async (req, res) => {
 // Получение профиля пользователя
 router.get('/profile', auth, async (req, res) => {
     try {
-        res.json({ 
-            user: { 
-                id: req.user._id, 
-                username: req.user.username, 
-                email: req.user.email,
-                role: req.user.role 
-            } 
+        res.json({
+            id: req.user.id,
+            username: req.user.username,
+            email: req.user.email,
+            role: req.user.role
         });
     } catch (error) {
         res.status(500).json({ message: 'Ошибка при получении профиля' });
@@ -143,21 +132,12 @@ router.get('/profile', auth, async (req, res) => {
 // Получение списка пользователей (только для администраторов)
 router.get('/users', auth, adminAuth, async (req, res) => {
     try {
-        console.log('Запрос на получение пользователей');
-        console.log('User role:', req.user.role);
-        
         const users = await User.findAll({
             attributes: ['id', 'username', 'email', 'role', 'isBlocked', 'createdAt', 'updatedAt']
         });
-        
-        console.log('Найдено пользователей:', users.length);
         res.json(users);
     } catch (error) {
-        console.error('Ошибка при получении списка пользователей:', error);
-        res.status(500).json({ 
-            message: 'Ошибка при получении списка пользователей',
-            error: error.message 
-        });
+        res.status(500).json({ message: 'Ошибка при получении списка пользователей' });
     }
 });
 
