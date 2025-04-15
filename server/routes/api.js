@@ -5,12 +5,13 @@ const { Op } = require('sequelize');
 const { Pool } = require('pg');
 const auth = require('../middleware/auth');
 
+// Указываем параметры подключения явно
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  user: 'postgres',
+  host: 'localhost',
+  database: 'bdbdsm',
+  password: 'admin',
+  port: 5432,
 });
 
 // Поиск с фильтрами
