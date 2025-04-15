@@ -1,25 +1,20 @@
 require('dotenv').config();
-const { User } = require('../models');
+const { sequelize, User } = require('../server/models');
 
 async function initAdmin() {
     try {
-        // Проверяем, существует ли уже администратор
-        const adminExists = await User.findOne({
+        // Удаляем существующего администратора, если он есть
+        await User.destroy({
             where: {
                 role: 'admin'
             }
         });
 
-        if (adminExists) {
-            console.log('Администратор уже существует');
-            process.exit(0);
-        }
-
-        // Создаем администратора
+        // Создаем нового администратора
         const admin = await User.create({
             username: 'admin',
             email: process.env.ADMIN_EMAIL || 'admin@example.com',
-            password: 'admin123', // Пароль будет захеширован автоматически
+            password: 'Admin123!', // Пароль будет захеширован автоматически через хук beforeSave
             role: 'admin',
             isBlocked: false
         });
@@ -27,7 +22,7 @@ async function initAdmin() {
         console.log('Администратор успешно создан:');
         console.log(`Username: ${admin.username}`);
         console.log(`Email: ${admin.email}`);
-        console.log('Пароль: admin123');
+        console.log('Пароль: Admin123!');
         console.log('Пожалуйста, измените пароль после первого входа');
 
         process.exit(0);
@@ -37,4 +32,7 @@ async function initAdmin() {
     }
 }
 
-initAdmin(); 
+// Синхронизируем базу данных перед созданием администратора
+sequelize.sync().then(() => {
+    initAdmin();
+}); 

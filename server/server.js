@@ -1,8 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { sequelize } = require('./models');
-const User = require('./models/User');
+const { sequelize, User } = require('./models');
 
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
@@ -11,13 +10,22 @@ const apiRoutes = require('./routes/api');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
+
+// Добавляем объект базы данных в приложение
+app.set('db', sequelize);
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api', apiRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api', apiRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to BDSM API' });
@@ -57,7 +65,7 @@ if (process.platform === 'win32') {
     process.on('SIGBREAK', gracefulShutdown);
 }
 
-// Синхронизация базы данных и запуск сервера
+// Инициализация базы данных и запуск сервера
 sequelize.sync({ alter: true })
     .then(() => {
         console.log('База данных синхронизирована');

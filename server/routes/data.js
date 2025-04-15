@@ -2,14 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 const auth = require('../middleware/auth');
+const pdfController = require('../controllers/pdfControllerNew');
+const dataController = require('../controllers/dataController');
 
 // Создаем подключение к базе данных
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+    user: 'postgres',
+    host: 'localhost',
+    database: 'bdbdsm',
+    password: 'admin',
+    port: 5432,
 });
 
 // Получение сводных данных
@@ -92,5 +94,23 @@ router.get('/oked-codes', auth, async (req, res) => {
         });
     }
 });
+
+// Получение данных из таблицы с возможной фильтрацией
+router.get('/', auth, dataController.getAllData);
+
+// Получение одной записи по ID
+router.get('/:id', auth, dataController.getDataById);
+
+// Экспорт всех данных в PDF
+router.get('/export/pdf', auth, pdfController.generatePdf);
+
+// Экспорт детальной информации по одной записи в PDF
+router.get('/export/pdf/:id', auth, pdfController.generateDetailPdf);
+
+// Экспорт множественных выбранных записей в PDF
+router.post('/export/selected-pdf', auth, pdfController.generateMultipleDetailPdf);
+
+// Поиск данных
+router.get('/search/:query', auth, dataController.searchData);
 
 module.exports = router; 

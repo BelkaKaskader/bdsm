@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { 
+  Route, 
+  Navigate,
+  createRoutesFromElements,
+  createBrowserRouter,
+  RouterProvider
+} from 'react-router-dom';
 import { Container, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Login from './components/Login';
 import DataTable from './components/DataTable';
@@ -22,36 +28,40 @@ function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  const router = createBrowserRouter(
+    createRoutesFromElements(
+      <Route>
+        <Route 
+          path="/login" 
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login onLoginSuccess={() => setIsAuthenticated(true)} />
+            )
+          } 
+        />
+        <Route
+          path="/dashboard"
+          element={
+            isAuthenticated ? (
+              <DataTable />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Route>
+    )
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <Container maxWidth="xl">
-          <Routes>
-            <Route 
-              path="/login" 
-              element={
-                isAuthenticated ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <Login onLoginSuccess={() => setIsAuthenticated(true)} />
-                )
-              } 
-            />
-            <Route
-              path="/dashboard"
-              element={
-                isAuthenticated ? (
-                  <DataTable />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Container>
-      </Router>
+      <Container maxWidth="xl">
+        <RouterProvider router={router} />
+      </Container>
     </ThemeProvider>
   );
 }
