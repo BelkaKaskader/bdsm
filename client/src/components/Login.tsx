@@ -62,6 +62,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            inputProps={{
+              autoComplete: "current-password"
+            }}
           />
           {error && (
             <Typography color="error" align="center" sx={{ mt: 1 }}>
