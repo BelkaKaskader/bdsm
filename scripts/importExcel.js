@@ -4,6 +4,7 @@ const XLSX = require('xlsx');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const { Сводная } = require('../models');
 
 // Чтение конфигурации из .env файла
 const pool = new Pool({
@@ -271,4 +272,46 @@ if (args.length > 0) {
     importFromExcel(excelFilePath);
 } else {
     importAllExcelFiles();
-} 
+}
+
+async function importExcel() {
+    try {
+        console.log('Начало импорта данных из Excel...');
+
+        // Путь к файлу Excel
+        const excelPath = path.join(__dirname, '../data/data.xlsx');
+
+        // Читаем файл Excel
+        const workbook = XLSX.readFile(excelPath);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Преобразуем в JSON
+        const data = XLSX.utils.sheet_to_json(worksheet);
+
+        // Импортируем данные
+        for (const row of data) {
+            await Сводная.create({
+                код_окэд: row['Код ОКЭД'] || row['код_окэд'],
+                вид_деятельности: row['Вид деятельности'] || row['вид_деятельности'],
+                количество_нп: parseInt(row['Количество НП'] || row['количество_нп']) || 0,
+                средняя_численность_работников: row['Средняя численность работников'] || row['средняя_численность_работников'],
+                Сумма_по_полю_ФОТт: parseFloat(row['Сумма по полю ФОТ'] || row['Сумма_по_полю_ФОТт']) || 0,
+                Сумма_по_полю_ср_зп: parseFloat(row['Сумма по полю ср.зп'] || row['Сумма_по_полю_ср_зп']) || 0,
+                сумма_налогов: parseFloat(row['Сумма налогов'] || row['сумма_налогов']) || 0,
+                удельный_вес: parseFloat(row['Удельный вес'] || row['удельный_вес']) || 0
+            });
+        }
+
+        console.log(`Импортировано ${data.length} записей`);
+    } catch (error) {
+        console.error('Ошибка при импорте данных:', error);
+        if (error.code === 'ENOENT') {
+            console.error('Файл data.xlsx не найден в папке data/');
+        }
+        process.exit(1);
+    }
+}
+
+// Запускаем импорт
+importExcel(); 

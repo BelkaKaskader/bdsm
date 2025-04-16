@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { sequelize } = require('./models');
 const User = require('./models/User');
+const initDatabase = require('./utils/initDatabase');
 
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
@@ -62,35 +63,25 @@ if (process.platform === 'win32') {
     process.on('SIGBREAK', gracefulShutdown);
 }
 
-// Синхронизация базы данных и запуск сервера
-sequelize.sync({ alter: true })
-    .then(() => {
+async function startServer() {
+    try {
+        // Синхронизация базы данных
+        await sequelize.sync();
         console.log('База данных синхронизирована');
-        
-        // Создаем сервер с обработкой ошибок
+
+        // Инициализация базы данных (если указан флаг)
+        if (process.env.INIT_DB === 'true') {
+            await initDatabase();
+        }
+
+        // Запуск сервера
         server = app.listen(PORT, () => {
             console.log(`Сервер запущен на порту ${PORT}`);
-        }).on('error', (err) => {
-            if (err.code === 'EADDRINUSE') {
-                console.log(`Порт ${PORT} занят. Пытаемся освободить...`);
-                require('child_process').exec(`npx kill-port ${PORT}`, (error) => {
-                    if (!error) {
-                        console.log(`Порт ${PORT} освобожден. Перезапускаем сервер...`);
-                        server = app.listen(PORT, () => {
-                            console.log(`Сервер успешно запущен на порту ${PORT}`);
-                        });
-                    } else {
-                        console.error(`Не удалось освободить порт ${PORT}:`, error);
-                        process.exit(1);
-                    }
-                });
-            } else {
-                console.error('Ошибка запуска сервера:', err);
-                process.exit(1);
-            }
         });
-    })
-    .catch(err => {
-        console.error('Ошибка при синхронизации базы данных:', err);
+    } catch (error) {
+        console.error('Ошибка при синхронизации базы данных:', error);
         process.exit(1);
-    }); 
+    }
+}
+
+startServer(); 
