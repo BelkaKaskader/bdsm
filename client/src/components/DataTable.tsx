@@ -81,13 +81,13 @@ const DataTable: React.FC = () => {
 
   const fetchData = async (filters?: any) => {
     try {
-      let url = 'http://localhost:5000/api/data';
+      let url = '/api/data';
       if (filters) {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
           if (value) params.append(key, value as string);
         });
-        url = `http://localhost:5000/api/search?${params.toString()}`;
+        url = `/api/search?${params.toString()}`;
       }
       
       const response = await axios.get(url);

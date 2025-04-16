@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { API_URL } from '../config';
 
 // Создаем экземпляр axios с базовым URL
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api'
+  baseURL: '/api'
 });
 
 // Добавляем перехватчик для запросов
