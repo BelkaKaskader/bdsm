@@ -1,12 +1,10 @@
 const { Pool } = require('pg');
+const { Sequelize } = require('sequelize');
 
 // Подключение к базе данных
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'bdbdsm',
-  password: 'admin',
-  port: 5432,
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  dialect: 'postgres'
 });
 
 /**
@@ -70,11 +68,14 @@ exports.getAllData = async (req, res) => {
     // Добавляем сортировку по коду ОКЭД
     query += ' ORDER BY код_окэд';
     
-    const result = await pool.query(query, queryParams);
+    const result = await sequelize.query(query, {
+      replacements: queryParams,
+      type: sequelize.QueryTypes.SELECT
+    });
     
-    console.log(`Найдено ${result.rows.length} записей`);
+    console.log(`Найдено ${result.length} записей`);
     
-    res.json(result.rows);
+    res.json(result);
   } catch (error) {
     console.error('Ошибка при получении данных:', error);
     res.status(500).json({
@@ -94,13 +95,16 @@ exports.getDataById = async (req, res) => {
     const { id } = req.params;
     console.log(`Получение данных по ID: ${id}`);
     
-    const result = await pool.query('SELECT * FROM "Сводная" WHERE id = $1', [id]);
+    const result = await sequelize.query('SELECT * FROM "Сводная" WHERE id = :id', {
+      replacements: { id },
+      type: sequelize.QueryTypes.SELECT
+    });
     
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: 'Запись не найдена' });
     }
     
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error('Ошибка при получении данных по ID:', error);
     res.status(500).json({
@@ -120,16 +124,19 @@ exports.searchData = async (req, res) => {
     const { query } = req.params;
     console.log(`Поиск данных по запросу: ${query}`);
     
-    const result = await pool.query(`
+    const result = await sequelize.query(`
       SELECT * FROM "Сводная" 
-      WHERE код_окэд ILIKE $1 
-      OR вид_деятельности ILIKE $1
+      WHERE код_окэд ILIKE :query 
+      OR вид_деятельности ILIKE :query
       ORDER BY код_окэд
-    `, [`%${query}%`]);
+    `, {
+      replacements: { query: `%${query}%` },
+      type: sequelize.QueryTypes.SELECT
+    });
     
-    console.log(`Найдено ${result.rows.length} записей`);
+    console.log(`Найдено ${result.length} записей`);
     
-    res.json(result.rows);
+    res.json(result);
   } catch (error) {
     console.error('Ошибка при поиске данных:', error);
     res.status(500).json({
