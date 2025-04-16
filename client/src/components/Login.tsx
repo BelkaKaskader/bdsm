@@ -8,7 +8,7 @@ import {
   Paper 
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -23,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/auth/login', {
+      const response = await api.post('/auth/login', {
         username,
         password
       });
