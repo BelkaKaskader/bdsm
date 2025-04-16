@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { sequelize } = require('./models');
 const User = require('./models/User');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
@@ -14,10 +15,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'client/build')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/data', dataRoutes);
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to BDSM API' });
