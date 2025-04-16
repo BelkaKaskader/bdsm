@@ -4,9 +4,10 @@
   "description": "Backend for BDSM website",
   "main": "server.js",
   "scripts": {
-    "start": "cd server && node server.js",
-    "dev": "cd server && nodemon server.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "client": "cd client && npm start",
+    "build": "cd client && npm install && npm run build",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "seed": "node scripts/seed.js",
     "import-excel": "node scripts/importExcel.js",

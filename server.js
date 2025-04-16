@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { sequelize } = require('./models');
 const User = require('./models/User');
-const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
@@ -15,17 +15,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the React app first
-app.use(express.static(path.join(__dirname, 'client/build')));
-
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api', apiRoutes);
 
-// For any other route, send the React app
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+// Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
 });
 
 // Error handling middleware
