@@ -174,10 +174,7 @@ const DataCharts: React.FC<DataChartsProps> = ({ data }) => {
             width={220}
             domain={[0, 2000]}
           />
-          <Tooltip 
-            formatter={(value) => formatValue(Number(value))}
-            labelFormatter={(label) => `${label}`}
-          />
+          <Tooltip />
           <Legend
             verticalAlign="bottom"
             align="center"
@@ -253,17 +250,14 @@ const DataCharts: React.FC<DataChartsProps> = ({ data }) => {
               value: 'Средняя зарплата (тыс)', 
               angle: -90, 
               position: 'outside', 
-              offset: 30,
+              offset: 10,
               style: { textAnchor: 'middle' } 
             }}
             tickFormatter={formatValue}
-            width={200}
-            domain={[0, 400000]}
+            width={220}
+            domain={[0, 1000000]}
           />
-          <Tooltip 
-            formatter={(value) => formatValue(Number(value))}
-            labelFormatter={(label) => `${label}`}
-          />
+          <Tooltip />
           <Legend
             verticalAlign="bottom"
             align="center"
@@ -346,10 +340,7 @@ const DataCharts: React.FC<DataChartsProps> = ({ data }) => {
             width={220}
             domain={[0, 6000000000]}
           />
-          <Tooltip 
-            formatter={(value) => formatValue(Number(value))}
-            labelFormatter={(label) => `${label}`}
-          />
+          <Tooltip />
           <Legend
             verticalAlign="bottom"
             align="center"

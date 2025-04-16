@@ -63,9 +63,9 @@ const Сводная = sequelize.define('Сводная', {
     timestamps: true
 });
 
-// Экспортируем модели
+// Экспортируем все модели
 module.exports = {
     sequelize,
-    User,
-    Сводная
+    Сводная,
+    User
 }; 

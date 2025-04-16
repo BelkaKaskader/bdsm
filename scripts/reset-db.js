@@ -1,17 +1,12 @@
-require('dotenv').config();
-const { sequelize } = require('../server/models');
+const { sequelize } = require('../models');
 
 async function resetDatabase() {
     try {
-        console.log('Начинаем сброс базы данных...');
-        
         // Удаляем все таблицы
-        console.log('Удаляем существующие таблицы...');
         await sequelize.query('DROP TABLE IF EXISTS "Users" CASCADE');
         await sequelize.query('DROP TABLE IF EXISTS "Сводная" CASCADE');
         
         // Создаем таблицы заново
-        console.log('Создаем таблицы заново...');
         await sequelize.sync({ force: true });
         
         console.log('База данных успешно сброшена');
@@ -22,5 +17,4 @@ async function resetDatabase() {
     }
 }
 
-// Запускаем сброс базы данных
 resetDatabase(); 

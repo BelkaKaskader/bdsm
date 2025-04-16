@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { 
   Box, 
   CircularProgress, 
@@ -17,13 +17,10 @@ import {
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
-  Close as CloseIcon,
-  Logout as LogoutIcon
+  Close as CloseIcon
 } from '@mui/icons-material';
-import api from '../api/axios';
+import axios from 'axios';
 import DataCharts from './DataCharts';
-import ExportButtons from './ExportButtons';
-import { useNavigate } from 'react-router-dom';
 
 interface DataRow {
   id: number;
@@ -79,21 +76,19 @@ const DataTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState<FilterValues>(initialFilterValues);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>([]);
-  const navigate = useNavigate();
 
   const fetchData = async (filters?: any) => {
     try {
-      let url = '/data';
+      let url = 'http://localhost:5000/api/data';
       if (filters) {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
           if (value) params.append(key, value as string);
         });
-        url = `/search?${params.toString()}`;
+        url = `http://localhost:5000/api/search?${params.toString()}`;
       }
       
-      const response = await api.get(url);
+      const response = await axios.get(url);
       const data = Array.isArray(response.data) ? response.data : response.data.data || [];
       const dataWithIds = data.map((row: DataRow, index: number) => ({
         ...row,
@@ -101,9 +96,9 @@ const DataTable: React.FC = () => {
       }));
       setRows(dataWithIds);
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       setError('Ошибка при загрузке данных');
-      console.error('Error fetching data:', err.response?.data || err);
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
@@ -128,16 +123,6 @@ const DataTable: React.FC = () => {
   const handleFilter = () => {
     fetchData(filterValues);
     setShowFilters(false);
-  };
-
-  // Обработчик выбора строк
-  const handleSelectionChange = (selectionModel: GridRowSelectionModel) => {
-    setSelectedRows(selectionModel);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
   };
 
   if (loading) {
@@ -185,24 +170,10 @@ const DataTable: React.FC = () => {
               >
                 Фильтры
               </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-              >
-                Выход
-              </Button>
             </Box>
           </Grid>
         </Grid>
       </Paper>
-
-      {/* Кнопки экспорта */}
-      <ExportButtons 
-        selectedIds={selectedRows.map((id) => id.toString())} 
-        filter={searchTerm} 
-      />
 
       {/* Диаграммы */}
       <Box sx={{ mb: 2 }}>
@@ -222,7 +193,6 @@ const DataTable: React.FC = () => {
           pageSizeOptions={[10, 25, 50, 100]}
           checkboxSelection
           disableRowSelectionOnClick
-          onRowSelectionModelChange={handleSelectionChange}
         />
       </Paper>
 

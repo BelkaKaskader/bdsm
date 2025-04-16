@@ -74,32 +74,21 @@ router.post('/register', auth, adminAuth, async (req, res) => {
 // Авторизация
 router.post('/login', async (req, res) => {
     try {
-        console.log('Попытка входа:', { username: req.body.username });
         const { username, password } = req.body;
 
         // Находим пользователя
         const user = await User.findOne({ where: { username } });
         if (!user) {
-            console.log('Пользователь не найден:', username);
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
-        console.log('Пользователь найден:', { 
-            id: user.id, 
-            username: user.username,
-            isBlocked: user.isBlocked
-        });
-
         // Проверяем, не заблокирован ли пользователь
         if (user.isBlocked) {
-            console.log('Пользователь заблокирован:', username);
             return res.status(403).json({ message: 'Пользователь заблокирован' });
         }
 
         // Проверяем пароль
         const isValidPassword = await user.validatePassword(password);
-        console.log('Проверка пароля:', isValidPassword ? 'успешно' : 'неверный пароль');
-        
         if (!isValidPassword) {
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
@@ -110,8 +99,6 @@ router.post('/login', async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '12h' }
         );
-
-        console.log('Токен создан успешно');
 
         res.json({
             token,
@@ -131,12 +118,11 @@ router.post('/login', async (req, res) => {
 // Получение профиля пользователя
 router.get('/profile', auth, async (req, res) => {
     try {
-        const user = await User.findOne({ where: { id: req.user.id } });
         res.json({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role
+            id: req.user.id,
+            username: req.user.username,
+            email: req.user.email,
+            role: req.user.role
         });
     } catch (error) {
         res.status(500).json({ message: 'Ошибка при получении профиля' });
@@ -147,7 +133,6 @@ router.get('/profile', auth, async (req, res) => {
 router.get('/users', auth, adminAuth, async (req, res) => {
     try {
         const users = await User.findAll({
-            where: {},
             attributes: ['id', 'username', 'email', 'role', 'isBlocked', 'createdAt', 'updatedAt']
         });
         res.json(users);
@@ -163,7 +148,9 @@ router.delete('/users/:userId', auth, adminAuth, async (req, res) => {
         console.log('ID пользователя для удаления:', req.params.userId);
 
         console.log('Поиск пользователя...');
-        const user = await User.findOne({ where: { id: req.params.userId } });
+        const user = await User.findOne({
+            where: { id: req.params.userId }
+        });
 
         if (!user) {
             console.log('Пользователь не найден');
@@ -221,7 +208,9 @@ router.patch('/users/:userId/role', auth, adminAuth, async (req, res) => {
         }
 
         console.log('Поиск пользователя...');
-        const user = await User.findOne({ where: { id: req.params.userId } });
+        const user = await User.findOne({
+            where: { id: req.params.userId }
+        });
         
         if (!user) {
             console.log('Пользователь не найден');
@@ -277,7 +266,9 @@ router.patch('/users/:userId/block', auth, adminAuth, async (req, res) => {
         console.log('ID пользователя:', req.params.userId);
         
         console.log('Поиск пользователя...');
-        const user = await User.findOne({ where: { id: req.params.userId } });
+        const user = await User.findOne({
+            where: { id: req.params.userId }
+        });
         
         if (!user) {
             console.log('Пользователь не найден');
@@ -331,7 +322,7 @@ router.patch('/users/:userId/block', auth, adminAuth, async (req, res) => {
 router.post('/reset-password-request', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ email });
         
         if (!user) {
             return res.status(404).json({ message: 'Пользователь не найден' });
@@ -359,10 +350,8 @@ router.post('/reset-password', async (req, res) => {
         const { token, newPassword } = req.body;
         
         const user = await User.findOne({
-            where: {
-                resetPasswordToken: token,
-                resetPasswordExpires: { [Op.gt]: Date.now() }
-            }
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
