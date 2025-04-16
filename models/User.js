@@ -57,15 +57,21 @@ module.exports = (sequelize) => {
         hooks: {
             beforeSave: async (user) => {
                 if (user.changed('password')) {
+                    console.log('Хеширование пароля...');
                     const salt = await bcrypt.genSalt(10);
                     user.password = await bcrypt.hash(user.password, salt);
+                    console.log('Пароль успешно захеширован');
                 }
             }
         }
     });
 
     User.prototype.validatePassword = async function(password) {
-        return await bcrypt.compare(password, this.password);
+        console.log('Проверка пароля...');
+        console.log('Хеш пароля в базе:', this.password);
+        const isValid = await bcrypt.compare(password, this.password);
+        console.log('Результат проверки:', isValid);
+        return isValid;
     };
 
     return User;

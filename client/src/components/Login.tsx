@@ -23,16 +23,19 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Attempting login with:', { username });
       const response = await api.post('/auth/login', {
         username,
         password
       });
       
+      console.log('Login response:', response.data);
       localStorage.setItem('token', response.data.token);
       onLoginSuccess();
       navigate('/dashboard');
-    } catch (err) {
-      setError('Неверное имя пользователя или пароль');
+    } catch (err: any) {
+      console.error('Login error:', err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Неверное имя пользователя или пароль');
     }
   };
 

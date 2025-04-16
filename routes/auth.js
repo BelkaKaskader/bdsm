@@ -74,25 +74,38 @@ router.post('/register', auth, adminAuth, async (req, res) => {
 // Авторизация
 router.post('/login', async (req, res) => {
     try {
+        console.log('=== Попытка входа ===');
+        console.log('Тело запроса:', { username: req.body.username });
+        
         const { username, password } = req.body;
 
         // Находим пользователя
+        console.log('Поиск пользователя в базе данных...');
         const user = await User.findOne({ where: { username } });
+        
         if (!user) {
+            console.log('Пользователь не найден');
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
+        console.log('Пользователь найден:', { username: user.username, role: user.role });
+
         // Проверяем, не заблокирован ли пользователь
         if (user.isBlocked) {
+            console.log('Пользователь заблокирован');
             return res.status(403).json({ message: 'Пользователь заблокирован' });
         }
 
         // Проверяем пароль
+        console.log('Проверка пароля...');
         const isValidPassword = await user.validatePassword(password);
+        
         if (!isValidPassword) {
+            console.log('Неверный пароль');
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
+        console.log('Пароль верный, создаем токен...');
         // Создаем JWT токен
         const token = jwt.sign(
             { id: user.id, role: user.role },
@@ -100,6 +113,7 @@ router.post('/login', async (req, res) => {
             { expiresIn: '12h' }
         );
 
+        console.log('Вход выполнен успешно');
         res.json({
             token,
             user: {
