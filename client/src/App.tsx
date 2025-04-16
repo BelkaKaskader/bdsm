@@ -48,7 +48,16 @@ function App() {
                 )
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route 
+              path="*" 
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } 
+            />
           </Routes>
         </Container>
       </Router>
