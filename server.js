@@ -15,13 +15,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// API Routes first
+app.use('/api/auth', authRoutes);
+app.use('/api/data', dataRoutes);
+app.use('/api', apiRoutes);
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api', apiRoutes);
-app.use('/api/data', dataRoutes);
+// Redirect root to login
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
