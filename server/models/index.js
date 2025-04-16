@@ -1,14 +1,15 @@
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config({ path: '../../.env' });
 
-// Подключение с использованием объекта конфигурации
-const sequelize = new Sequelize({
-    database: 'bdbdsm',
-    username: 'postgres',
-    password: 'admin',
-    host: 'localhost',
-    port: 5432,
+// Подключение с использованием DATABASE_URL
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false
+        }
+    },
     logging: false
 });
 
