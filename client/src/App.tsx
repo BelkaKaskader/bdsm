@@ -29,6 +29,16 @@ function App() {
         <Container maxWidth="xl">
           <Routes>
             <Route 
+              path="/" 
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route 
               path="/login" 
               element={
                 isAuthenticated ? (

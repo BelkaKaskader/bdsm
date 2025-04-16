@@ -15,16 +15,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the React app first
+app.use(express.static(path.join(__dirname, 'client/build')));
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api', apiRoutes);
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, 'client/build')));
-
-// All remaining requests return the React app, so it can handle routing
-app.get('*', function(req, res) {
+// For any other route, send the React app
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
