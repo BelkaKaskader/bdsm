@@ -1,5 +1,8 @@
 const { sequelize } = require('../models');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const XLSX = require('xlsx');
+const { Сводная } = require('../models');
 
 async function initDatabase() {
     try {
@@ -45,11 +48,47 @@ async function initDatabase() {
             throw new Error('Ошибка создания администратора');
         }
 
-        // Импорт данных из Excel если нужно
-        if (process.env.IMPORT_DATA === 'true') {
-            console.log('3. Импорт данных из Excel...');
-            const importExcel = require('../scripts/importExcel');
-            await importExcel();
+        // Импорт данных из Excel
+        console.log('3. Импорт данных из Excel...');
+        const excelPath = path.join(__dirname, '../otchety/data.xlsx');
+        
+        try {
+            console.log(`Чтение файла: ${excelPath}`);
+            const workbook = XLSX.readFile(excelPath);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            // Преобразуем в JSON
+            const data = XLSX.utils.sheet_to_json(worksheet);
+            console.log(`Найдено ${data.length} записей в Excel файле`);
+
+            // Импортируем данные
+            let importedCount = 0;
+            for (const row of data) {
+                if (!row['Код ОКЭД'] || row['Код ОКЭД'] === 'Общий итог') {
+                    continue;
+                }
+
+                await Сводная.create({
+                    код_окэд: row['Код ОКЭД'],
+                    вид_деятельности: row['Вид деятельности'],
+                    количество_нп: parseInt(row['Количество НП']) || 0,
+                    средняя_численность_работников: row['Средняя численность работников'] || '0',
+                    Сумма_по_полю_ФОТт: parseFloat(row['Сумма по полю ФОТ']) || 0,
+                    Сумма_по_полю_ср_зп: parseFloat(row['Сумма по полю ср.зп']) || 0,
+                    сумма_налогов: parseFloat(row['Сумма налогов']) || 0,
+                    удельный_вес: parseFloat(row['Удельный вес %']) || 0
+                });
+                importedCount++;
+            }
+            console.log(`Успешно импортировано ${importedCount} записей`);
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.error('Файл data.xlsx не найден в папке /otchety/');
+            } else {
+                console.error('Ошибка при импорте данных:', error);
+            }
+            throw error;
         }
 
         console.log('=== Инициализация базы данных завершена успешно ===');
