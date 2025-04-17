@@ -50,65 +50,17 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
     }
   };
 
-  // Функция для скачивания одной записи в PDF
-  const handleExportSingleToPdf = async () => {
-    if (!selectedIds || selectedIds.length === 0) {
-      alert('Пожалуйста, выберите запись для экспорта');
-      return;
-    }
-
-    if (selectedIds.length > 1) {
-      alert('Пожалуйста, выберите только одну запись для детального экспорта');
-      return;
-    }
-
-    try {
-      const id = selectedIds[0];
-      console.log('Начинаем экспорт записи с ID:', id);
-      
-      // Запрос для скачивания PDF выбранной записи
-      const url = `/data/export/pdf/${id}`;
-      console.log('URL запроса:', url);
-      
-      console.log('Отправляем запрос...');
-      const response = await api({
-        url,
-        method: 'GET',
-        responseType: 'blob'
-      });
-      
-      console.log('Ответ получен:', response.status, response.statusText);
-      console.log('Размер полученных данных:', response.data.size);
-
-      // Создаем ссылку для скачивания файла
-      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', `detail-report-${Date.now()}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      console.log('Файл скачивается...');
-    } catch (error: any) {
-      console.error('Ошибка при экспорте выбранной записи в PDF:', error);
-      if (error.response) {
-        console.error('Ответ сервера:', error.response.status, error.response.statusText);
-      }
-      alert('Произошла ошибка при экспорте в PDF. Пожалуйста, попробуйте еще раз.');
-    }
-  };
-
-  // Функция для скачивания нескольких выбранных записей в PDF
-  const handleExportMultipleToPdf = async () => {
+  // Функция для скачивания выбранных записей в PDF
+  const handleExportSelectedToPdf = async () => {
     if (!selectedIds || selectedIds.length === 0) {
       alert('Пожалуйста, выберите записи для экспорта');
       return;
     }
 
     try {
-      console.log('Начинаем экспорт нескольких записей:', selectedIds);
+      console.log('Начинаем экспорт выбранных записей:', selectedIds);
       
-      // Запрос для скачивания PDF нескольких записей
+      // Запрос для скачивания PDF выбранных записей
       const url = '/data/export/selected-pdf';
       console.log('URL запроса:', url);
       console.log('Данные запроса:', { ids: selectedIds });
@@ -131,13 +83,13 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute('download', `multi-report-${Date.now()}.pdf`);
+      link.setAttribute('download', `selected-report-${Date.now()}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       console.log('Файл скачивается...');
     } catch (error: any) {
-      console.error('Ошибка при экспорте нескольких записей в PDF:', error);
+      console.error('Ошибка при экспорте в PDF:', error);
       if (error.response) {
         console.error('Ответ сервера:', error.response.status, error.response.statusText);
       }
@@ -159,21 +111,15 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
         </Button>
       </Tooltip>
       
-      <Tooltip title={selectedIds && selectedIds.length > 1 
-        ? "Экспортировать выбранные записи в PDF" 
-        : "Экспортировать выбранную запись в PDF"
-      }>
+      <Tooltip title="Экспортировать выбранные записи в PDF">
         <span>
           <Button 
             variant="outlined" 
             startIcon={<FileDownloadIcon />}
-            onClick={handleExportSingleToPdf}
+            onClick={handleExportSelectedToPdf}
             disabled={!selectedIds || selectedIds.length === 0}
           >
-            {selectedIds && selectedIds.length > 1 
-              ? "Выбранные записи в PDF" 
-              : "Выбранную запись в PDF"
-            }
+            Выбранные записи в PDF
           </Button>
         </span>
       </Tooltip>

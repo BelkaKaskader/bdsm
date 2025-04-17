@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import DataCharts from './DataCharts';
 import ExportButtons from './ExportButtons';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 interface DataRow {
   id: number;
@@ -83,6 +84,7 @@ const DataTable: React.FC = () => {
   const [filterValues, setFilterValues] = useState<FilterValues>(initialFilterValues);
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   const fetchData = async (filters?: any) => {
     try {
@@ -181,22 +183,12 @@ const DataTable: React.FC = () => {
         </Button>
       </Stack>
 
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          label="Поиск по коду ОКЭД"
-          variant="outlined"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ width: 200 }}
-        />
-      </Box>
-
       <ExportButtons 
-        selectedIds={rows.map(row => row.id)} 
+        selectedIds={selectedRows} 
         filter={searchTerm}
       />
 
-      {/* Панель инструментов */}
+      {/* Панель поиска */}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
@@ -245,6 +237,9 @@ const DataTable: React.FC = () => {
           }}
           pageSizeOptions={[10, 25, 50, 100]}
           checkboxSelection
+          onRowSelectionModelChange={(newSelection) => {
+            setSelectedRows(newSelection.map(id => id.toString()));
+          }}
           disableRowSelectionOnClick
         />
       </Paper>
