@@ -20,7 +20,7 @@ import {
   FilterList as FilterIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../api/axios';
 import DataCharts from './DataCharts';
 
 interface DataRow {
@@ -81,16 +81,16 @@ const DataTable: React.FC = () => {
 
   const fetchData = async (filters?: any) => {
     try {
-      let url = '/api/data';
+      let url = '/data';
       if (filters) {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
           if (value) params.append(key, value as string);
         });
-        url = `/api/search?${params.toString()}`;
+        url = `/search?${params.toString()}`;
       }
       
-      const response = await axios.get(url);
+      const response = await api.get(url);
       const data = Array.isArray(response.data) ? response.data : response.data.data || [];
       const dataWithIds = data.map((row: DataRow, index: number) => ({
         ...row,

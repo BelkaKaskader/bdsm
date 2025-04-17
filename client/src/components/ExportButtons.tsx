@@ -10,9 +10,6 @@ interface ExportButtonsProps {
 }
 
 const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) => {
-  // Получаем токен из локального хранилища
-  const token = localStorage.getItem('token');
-
   // Функция для скачивания всех данных в PDF
   const handleExportAllToPdf = async () => {
     try {
@@ -29,10 +26,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       const response = await api({
         url,
         method: 'GET',
-        responseType: 'blob', // Важно для бинарных данных
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        responseType: 'blob' // Важно для бинарных данных
       });
       
       console.log('Ответ получен:', response.status, response.statusText);
@@ -80,10 +74,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       const response = await api({
         url,
         method: 'GET',
-        responseType: 'blob',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        responseType: 'blob'
       });
       
       console.log('Ответ получен:', response.status, response.statusText);
@@ -102,7 +93,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       console.error('Ошибка при экспорте выбранной записи в PDF:', error);
       if (error.response) {
         console.error('Ответ сервера:', error.response.status, error.response.statusText);
-        console.error('Данные ошибки:', error.response.data);
       }
       alert('Произошла ошибка при экспорте в PDF. Пожалуйста, попробуйте еще раз.');
     }
@@ -129,7 +119,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
         method: 'POST',
         responseType: 'blob',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         data: { ids: selectedIds }
@@ -151,7 +140,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       console.error('Ошибка при экспорте нескольких записей в PDF:', error);
       if (error.response) {
         console.error('Ответ сервера:', error.response.status, error.response.statusText);
-        console.error('Данные ошибки:', error.response.data);
       }
       alert('Произошла ошибка при экспорте в PDF. Пожалуйста, попробуйте еще раз.');
     }
