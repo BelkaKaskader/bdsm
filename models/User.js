@@ -57,21 +57,33 @@ module.exports = (sequelize) => {
         hooks: {
             beforeSave: async (user) => {
                 if (user.changed('password')) {
-                    console.log('Хеширование пароля...');
+                    console.group('=== Хеширование пароля ===');
+                    console.log('Начало хеширования пароля');
+                    console.log('Длина исходного пароля:', user.password.length);
                     const salt = await bcrypt.genSalt(10);
+                    console.log('Сгенерированная соль:', salt);
                     user.password = await bcrypt.hash(user.password, salt);
-                    console.log('Пароль успешно захеширован');
+                    console.log('Итоговый хеш:', user.password);
+                    console.groupEnd();
                 }
             }
         }
     });
 
     User.prototype.validatePassword = async function(password) {
-        console.log('Проверка пароля...');
-        console.log('Хеш пароля в базе:', this.password);
-        const isValid = await bcrypt.compare(password, this.password);
-        console.log('Результат проверки:', isValid);
-        return isValid;
+        console.group('=== Проверка пароля ===');
+        console.log('Длина введенного пароля:', password.length);
+        console.log('Хеш в базе:', this.password);
+        try {
+            const isValid = await bcrypt.compare(password, this.password);
+            console.log('Результат проверки:', isValid);
+            console.groupEnd();
+            return isValid;
+        } catch (error) {
+            console.error('Ошибка при проверке пароля:', error);
+            console.groupEnd();
+            return false;
+        }
     };
 
     return User;

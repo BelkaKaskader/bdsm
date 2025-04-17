@@ -21,7 +21,8 @@
     "auth-test": "node scripts/auth.js",
     "init-admin": "node scripts/initAdmin.js",
     "reset-db": "node scripts/reset-db.js",
-    "check-admin": "node scripts/check-admin.js"
+    "check-admin": "node scripts/check-admin.js",
+    "create-admin": "node scripts/createAdmin.js"
   },
   "keywords": [],
   "author": "",
