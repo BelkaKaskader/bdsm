@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 module.exports = (sequelize) => {
     const User = sequelize.define('User', {
@@ -60,24 +60,14 @@ module.exports = (sequelize) => {
                     console.group('=== Хеширование пароля в модели User ===');
                     const plainPassword = user.password;
                     console.log('Исходный пароль:', plainPassword);
-                    console.log('Длина исходного пароля:', plainPassword.length);
                     
-                    // Проверяем, не является ли пароль уже хешем bcrypt
-                    const isBcryptHash = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/.test(plainPassword);
-                    if (isBcryptHash) {
-                        console.log('Пароль уже является bcrypt хешем, пропускаем хеширование');
-                        console.groupEnd();
-                        return;
-                    }
-
-                    const salt = await bcrypt.genSalt(10);
-                    console.log('Сгенерированная соль:', salt);
-                    user.password = await bcrypt.hash(plainPassword, salt);
-                    console.log('Итоговый хеш:', user.password);
+                    // Создаем хеш с использованием JWT_SECRET
+                    user.password = crypto
+                        .createHmac('sha256', process.env.JWT_SECRET)
+                        .update(plainPassword)
+                        .digest('base64');
                     
-                    // Проверяем хеширование
-                    const verifyHash = await bcrypt.compare(plainPassword, user.password);
-                    console.log('Проверка хеширования:', verifyHash);
+                    console.log('Финальный хеш:', user.password);
                     console.groupEnd();
                 }
             }
@@ -88,37 +78,23 @@ module.exports = (sequelize) => {
         console.group('=== Проверка пароля в модели User ===');
         try {
             console.log('Введенный пароль:', password);
-            console.log('Длина введенного пароля:', password.length);
             console.log('Хеш в базе:', this.password);
             
-            // Проверяем, что хеш в базе имеет правильный формат
-            const isValidHash = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/.test(this.password);
-            console.log('Хеш в базе имеет правильный формат:', isValidHash);
+            // Создаем хеш для проверки
+            const checkHash = crypto
+                .createHmac('sha256', process.env.JWT_SECRET)
+                .update(password)
+                .digest('base64');
             
-            if (!isValidHash) {
-                console.error('Ошибка: хеш пароля в базе имеет неправильный формат');
-                console.groupEnd();
-                return false;
-            }
-
-            // Пробуем сравнить напрямую через bcrypt
-            const isValid = await bcrypt.compare(password, this.password);
-            console.log('Результат проверки bcrypt.compare:', isValid);
+            console.log('Проверочный хеш:', checkHash);
             
-            // Дополнительная проверка - создаем новый хеш с тем же паролем
-            const salt = await bcrypt.genSalt(10);
-            const newHash = await bcrypt.hash(password, salt);
-            console.log('Тестовый хеш того же пароля:', newHash);
+            const isValid = checkHash === this.password;
+            console.log('Результат проверки:', isValid);
             
-            // Сравниваем новый хеш с тем же паролем
-            const testValid = await bcrypt.compare(password, newHash);
-            console.log('Тестовая проверка с новым хешем:', testValid);
-
             console.groupEnd();
             return isValid;
         } catch (error) {
             console.error('Ошибка при проверке пароля:', error);
-            console.error('Стек ошибки:', error.stack);
             console.groupEnd();
             return false;
         }

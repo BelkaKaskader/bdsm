@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { sequelize } = require('./models');
 const initDatabase = require('./utils/initDatabase');
+const fs = require('fs');
 
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
@@ -62,25 +63,41 @@ if (process.platform === 'win32') {
     process.on('SIGBREAK', gracefulShutdown);
 }
 
+async function checkAdminExists() {
+    try {
+        const { User } = require('./models');
+        const admin = await User.findOne({ where: { username: 'admin' } });
+        return !!admin;
+    } catch (error) {
+        console.error('Ошибка при проверке админа:', error);
+        return false;
+    }
+}
+
 async function startServer() {
     try {
         // Синхронизация базы данных
         await sequelize.sync();
         console.log('База данных синхронизирована');
 
-        // Инициализация базы данных (если указан флаг)
-        if (process.env.INIT_DB === 'true') {
-            console.log('Запуск инициализации базы данных...');
+        // Проверяем существование админа
+        const adminExists = await checkAdminExists();
+        
+        // Если админа нет, запускаем инициализацию
+        if (!adminExists) {
+            console.log('Администратор не найден. Запуск инициализации...');
             await initDatabase();
-            console.log('Инициализация базы данных завершена');
-            
-            // Отключаем флаг после инициализации
-            process.env.INIT_DB = 'false';
+            console.log('Инициализация завершена');
+        } else {
+            console.log('Администратор уже существует, пропускаем инициализацию');
         }
 
         // Запуск сервера
         server = app.listen(PORT, () => {
             console.log(`Сервер запущен на порту ${PORT}`);
+            console.log('Для входа используйте:');
+            console.log('Логин: admin');
+            console.log('Пароль: admin123');
         });
     } catch (error) {
         console.error('Ошибка при запуске сервера:', error);
