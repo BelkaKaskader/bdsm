@@ -1,6 +1,20 @@
 const { DataTypes } = require('sequelize');
 const crypto = require('crypto');
 
+// Функция для хеширования пароля
+const hashPassword = (password) => {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    return `${salt}:${hash}`;
+};
+
+// Функция для проверки пароля
+const validatePassword = (password, storedPassword) => {
+    const [salt, hash] = storedPassword.split(':');
+    const testHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    return hash === testHash;
+};
+
 module.exports = (sequelize) => {
     const User = sequelize.define('User', {
         id: {
@@ -61,11 +75,8 @@ module.exports = (sequelize) => {
                     const plainPassword = user.password;
                     console.log('Исходный пароль:', plainPassword);
                     
-                    // Создаем хеш с использованием JWT_SECRET
-                    user.password = crypto
-                        .createHmac('sha256', process.env.JWT_SECRET)
-                        .update(plainPassword)
-                        .digest('base64');
+                    // Хешируем пароль
+                    user.password = hashPassword(plainPassword);
                     
                     console.log('Финальный хеш:', user.password);
                     console.groupEnd();
@@ -80,17 +91,10 @@ module.exports = (sequelize) => {
             console.log('Введенный пароль:', password);
             console.log('Хеш в базе:', this.password);
             
-            // Создаем хеш для проверки
-            const checkHash = crypto
-                .createHmac('sha256', process.env.JWT_SECRET)
-                .update(password)
-                .digest('base64');
+            // Проверяем пароль
+            const isValid = validatePassword(password, this.password);
             
-            console.log('Проверочный хеш:', checkHash);
-            
-            const isValid = checkHash === this.password;
             console.log('Результат проверки:', isValid);
-            
             console.groupEnd();
             return isValid;
         } catch (error) {

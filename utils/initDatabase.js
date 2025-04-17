@@ -2,6 +2,13 @@ const { sequelize } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 
+// Функция для хеширования пароля
+const hashPassword = (password) => {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    return `${salt}:${hash}`;
+};
+
 async function initDatabase() {
     try {
         console.log('=== Начало инициализации базы данных ===');
@@ -20,11 +27,8 @@ async function initDatabase() {
         console.log('Создание хеша пароля...');
         console.log('- Исходный пароль:', plainPassword);
         
-        // Создаем хеш с использованием JWT_SECRET
-        const hashedPassword = crypto
-            .createHmac('sha256', process.env.JWT_SECRET)
-            .update(plainPassword)
-            .digest('base64');
+        // Хешируем пароль
+        const hashedPassword = hashPassword(plainPassword);
         
         console.log('- Финальный хеш:', hashedPassword);
         
@@ -49,15 +53,6 @@ async function initDatabase() {
             console.log('- ID:', admin.id);
             console.log('- Логин:', admin.username);
             console.log('- Роль:', admin.role);
-            
-            // Проверяем хеш
-            const checkHash = crypto
-                .createHmac('sha256', process.env.JWT_SECRET)
-                .update(plainPassword)
-                .digest('base64');
-                
-            const hashesMatch = checkHash === admin.password;
-            console.log('- Проверка хеша:', hashesMatch ? 'успешно' : 'ошибка');
         } else {
             throw new Error('Ошибка создания администратора');
         }
