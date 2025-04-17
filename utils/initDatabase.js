@@ -10,13 +10,15 @@ async function initDatabase() {
         console.log('\n1. Сброс базы данных...');
         execSync('node scripts/reset-db.js', { stdio: 'inherit' });
         
-        // Инициализация админа
+        // Создание администратора
         console.log('\n2. Создание администратора...');
-        execSync('node scripts/init-admin.js', { stdio: 'inherit' });
+        execSync('node scripts/sql-reset-admin.js', { stdio: 'inherit' });
         
         // Импорт данных из Excel
-        console.log('\n3. Импорт данных из Excel...');
-        execSync('node scripts/importExcel.js', { stdio: 'inherit' });
+        if (process.env.IMPORT_DATA === 'true') {
+            console.log('\n3. Импорт данных из Excel...');
+            execSync('node scripts/importExcel.js', { stdio: 'inherit' });
+        }
 
         console.log('\n=== Инициализация базы данных завершена успешно ===');
     } catch (error) {

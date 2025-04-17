@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { sequelize } = require('./models');
-const User = require('./models/User');
 const initDatabase = require('./utils/initDatabase');
 
 const authRoutes = require('./routes/auth');
@@ -71,7 +70,12 @@ async function startServer() {
 
         // Инициализация базы данных (если указан флаг)
         if (process.env.INIT_DB === 'true') {
+            console.log('Запуск инициализации базы данных...');
             await initDatabase();
+            console.log('Инициализация базы данных завершена');
+            
+            // Отключаем флаг после инициализации
+            process.env.INIT_DB = 'false';
         }
 
         // Запуск сервера
@@ -79,7 +83,7 @@ async function startServer() {
             console.log(`Сервер запущен на порту ${PORT}`);
         });
     } catch (error) {
-        console.error('Ошибка при синхронизации базы данных:', error);
+        console.error('Ошибка при запуске сервера:', error);
         process.exit(1);
     }
 }
