@@ -23,31 +23,14 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.group('=== Отправка формы входа ===');
-      console.log('Логин:', username);
-      console.log('Длина пароля:', password.length);
-      console.log('Пароль содержит пробелы в начале/конце:', password !== password.trim());
+      console.log('Отправка формы входа');
       
       // Очищаем пароль от пробелов
       const cleanPassword = password.trim();
       
-      console.log('Отправка данных на сервер:', {
-        username,
-        passwordLength: cleanPassword.length
-      });
-
       const response = await api.post('/auth/login', {
         username,
         password: cleanPassword
-      });
-      
-      console.log('Ответ сервера:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: {
-          ...response.data,
-          token: response.data.token ? 'JWT получен' : 'JWT отсутствует'
-        }
       });
 
       if (!response.data.token) {
@@ -57,26 +40,23 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       localStorage.setItem('token', response.data.token);
       onLoginSuccess();
       navigate('/dashboard');
-      console.groupEnd();
-    } catch (err: any) {
-      console.group('=== Ошибка входа ===');
-      console.error('Детали ошибки:', {
-        message: err.message,
-        response: {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data
-        }
-      });
-      console.groupEnd();
-      setError(err.response?.data?.message || 'Неверное имя пользователя или пароль');
+    } catch (error: any) {
+      console.error('Ошибка при входе:', error);
+      setError('Неверное имя пользователя или пароль');
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
-        <Typography component="h1" variant="h5" align="center">
+    <Box
+      sx={{
+        marginTop: 8,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%' }}>
+        <Typography component="h1" variant="h5" align="center" gutterBottom>
           Вход в систему
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
@@ -84,7 +64,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             margin="normal"
             required
             fullWidth
+            id="username"
             label="Имя пользователя"
+            name="username"
+            autoComplete="username"
+            autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -92,16 +76,16 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             margin="normal"
             required
             fullWidth
+            name="password"
             label="Пароль"
             type="password"
+            id="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            inputProps={{
-              autoComplete: "current-password"
-            }}
           />
           {error && (
-            <Typography color="error" align="center" sx={{ mt: 1 }}>
+            <Typography color="error" sx={{ mt: 2 }}>
               {error}
             </Typography>
           )}
@@ -115,7 +99,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </Button>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 

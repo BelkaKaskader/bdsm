@@ -23,7 +23,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
         : '/data/export/pdf';
       
       console.log('URL запроса:', url);
-      console.log('Токен авторизации:', token ? 'Токен получен' : 'Токен отсутствует');
 
       // Запрос для скачивания PDF
       console.log('Отправляем запрос...');
@@ -52,22 +51,20 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       console.error('Ошибка при экспорте в PDF:', error);
       if (error.response) {
         console.error('Ответ сервера:', error.response.status, error.response.statusText);
-        console.error('Данные ошибки:', error.response.data);
       }
       alert('Произошла ошибка при экспорте в PDF. Пожалуйста, попробуйте еще раз.');
     }
   };
 
-  // Функция для скачивания выбранной записи в PDF
-  const handleExportSelectedToPdf = async () => {
+  // Функция для скачивания одной записи в PDF
+  const handleExportSingleToPdf = async () => {
     if (!selectedIds || selectedIds.length === 0) {
       alert('Пожалуйста, выберите запись для экспорта');
       return;
     }
 
-    // Если выбрано больше одной записи, используем множественный экспорт
     if (selectedIds.length > 1) {
-      handleExportMultipleToPdf();
+      alert('Пожалуйста, выберите только одну запись для детального экспорта');
       return;
     }
 
@@ -78,7 +75,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       // Запрос для скачивания PDF выбранной записи
       const url = `/data/export/pdf/${id}`;
       console.log('URL запроса:', url);
-      console.log('Токен авторизации:', token ? 'Токен получен' : 'Токен отсутствует');
       
       console.log('Отправляем запрос...');
       const response = await api({
@@ -125,7 +121,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       // Запрос для скачивания PDF нескольких записей
       const url = '/data/export/selected-pdf';
       console.log('URL запроса:', url);
-      console.log('Токен авторизации:', token ? 'Токен получен' : 'Токен отсутствует');
       console.log('Данные запроса:', { ids: selectedIds });
       
       console.log('Отправляем запрос...');
@@ -153,7 +148,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
       link.remove();
       console.log('Файл скачивается...');
     } catch (error: any) {
-      console.error('Ошибка при экспорте выбранных записей в PDF:', error);
+      console.error('Ошибка при экспорте нескольких записей в PDF:', error);
       if (error.response) {
         console.error('Ответ сервера:', error.response.status, error.response.statusText);
         console.error('Данные ошибки:', error.response.data);
@@ -184,7 +179,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ selectedIds, filter }) =>
           <Button 
             variant="outlined" 
             startIcon={<FileDownloadIcon />}
-            onClick={handleExportSelectedToPdf}
+            onClick={handleExportSingleToPdf}
             disabled={!selectedIds || selectedIds.length === 0}
           >
             {selectedIds && selectedIds.length > 1 
