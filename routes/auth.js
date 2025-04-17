@@ -132,7 +132,9 @@ router.post('/login', async (req, res) => {
             { expiresIn: '12h' }
         );
         
-        console.log('JWT токен успешно создан');
+        console.log('=== JWT Токен ===');
+        console.log(token);
+        console.log('================');
 
         const response = {
             token,
