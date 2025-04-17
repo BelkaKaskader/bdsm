@@ -26,7 +26,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import DataCharts from './DataCharts';
 import ExportButtons from './ExportButtons';
-import LogoutIcon from '@mui/icons-material/Logout';
 
 interface DataRow {
   id: number;
