@@ -1,19 +1,20 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { Sequelize } = require('sequelize');
 const { User } = require('../models');
 
 async function createAdminUser() {
     try {
-        console.group('=== Создание администратора ===');
+        const plainPassword = 'admin123'; // Сохраняем исходный пароль в отдельную переменную
         
-        // Данные администратора
+        console.group('=== Создание администратора ===');
+        console.log('Исходный пароль:', plainPassword);
+        
+        // Данные администратора без пароля
         const adminData = {
             id: uuidv4(),
             username: 'admin',
             email: 'admin@example.com',
-            password: 'admin123',
             role: 'admin',
             createdAt: new Date(),
             updatedAt: new Date()
@@ -24,60 +25,27 @@ async function createAdminUser() {
             where: { username: adminData.username }
         });
 
-        // Тестируем хеширование отдельно
-        console.group('=== Тест хеширования ===');
-        console.log('Исходный пароль:', adminData.password);
-        console.log('Длина исходного пароля:', adminData.password.length);
-        
-        const testSalt = await bcrypt.genSalt(10);
-        console.log('Тестовая соль:', testSalt);
-        
-        const testHash = await bcrypt.hash(adminData.password, testSalt);
-        console.log('Тестовый хеш:', testHash);
-        
-        // Проверяем тестовое хеширование
-        const testVerify = await bcrypt.compare(adminData.password, testHash);
-        console.log('Тестовая проверка хеша:', testVerify);
-        console.groupEnd();
-
         if (existingAdmin) {
             console.group('=== Обновление пароля администратора ===');
             console.log('Текущий хеш в базе:', existingAdmin.password);
             
-            const salt = await bcrypt.genSalt(10);
-            console.log('Новая соль:', salt);
-            
-            const hashedPassword = await bcrypt.hash(adminData.password, salt);
-            console.log('Новый хеш:', hashedPassword);
-            
-            // Проверяем новый хеш
-            const verifyNew = await bcrypt.compare(adminData.password, hashedPassword);
-            console.log('Проверка нового хеша:', verifyNew);
-            
+            // Обновляем напрямую через sequelize, чтобы избежать хука beforeSave
             await existingAdmin.update({
-                password: hashedPassword
+                password: plainPassword
             });
             
-            console.log('Пароль администратора успешно обновлен');
+            console.log('Пароль администратора обновлен');
             console.groupEnd();
         } else {
             console.group('=== Создание нового администратора ===');
-            const salt = await bcrypt.genSalt(10);
-            console.log('Соль для нового администратора:', salt);
             
-            const hashedPassword = await bcrypt.hash(adminData.password, salt);
-            console.log('Хеш для нового администратора:', hashedPassword);
-            
-            // Проверяем хеш
-            const verifyNew = await bcrypt.compare(adminData.password, hashedPassword);
-            console.log('Проверка хеша нового администратора:', verifyNew);
-            
+            // Создаем пользователя с исходным паролем
             await User.create({
                 ...adminData,
-                password: hashedPassword
+                password: plainPassword // Передаем исходный пароль
             });
             
-            console.log('Администратор успешно создан');
+            console.log('Администратор создан');
             console.groupEnd();
         }
 
@@ -88,13 +56,13 @@ async function createAdminUser() {
         
         console.group('=== Финальная проверка ===');
         console.log('Хеш в базе:', finalAdmin.password);
-        const finalVerify = await bcrypt.compare(adminData.password, finalAdmin.password);
-        console.log('Проверка сохраненного хеша:', finalVerify);
+        const verifyResult = await bcrypt.compare(plainPassword, finalAdmin.password);
+        console.log('Проверка пароля:', verifyResult);
         console.groupEnd();
 
         console.log('Учетные данные администратора:');
         console.log('Логин:', adminData.username);
-        console.log('Пароль:', adminData.password);
+        console.log('Пароль:', plainPassword);
         console.groupEnd();
 
     } catch (error) {

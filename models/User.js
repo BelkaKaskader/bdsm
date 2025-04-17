@@ -58,13 +58,24 @@ module.exports = (sequelize) => {
             beforeSave: async (user) => {
                 if (user.changed('password')) {
                     console.group('=== Хеширование пароля в модели User ===');
-                    console.log('Исходный пароль (длина):', user.password.length);
+                    const plainPassword = user.password;
+                    console.log('Исходный пароль (длина):', plainPassword.length);
+                    
+                    // Проверяем, не является ли пароль уже хешем bcrypt
+                    const isBcryptHash = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/.test(plainPassword);
+                    if (isBcryptHash) {
+                        console.log('Пароль уже является bcrypt хешем, пропускаем хеширование');
+                        console.groupEnd();
+                        return;
+                    }
+
                     const salt = await bcrypt.genSalt(10);
                     console.log('Сгенерированная соль:', salt);
-                    user.password = await bcrypt.hash(user.password, salt);
+                    user.password = await bcrypt.hash(plainPassword, salt);
                     console.log('Итоговый хеш:', user.password);
+                    
                     // Проверяем хеширование
-                    const verifyHash = await bcrypt.compare(user.password, user.password);
+                    const verifyHash = await bcrypt.compare(plainPassword, user.password);
                     console.log('Проверка хеширования:', verifyHash);
                     console.groupEnd();
                 }
