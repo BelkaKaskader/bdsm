@@ -86,6 +86,9 @@ const DataTable: React.FC = () => {
 
   const fetchData = async (filters?: any) => {
     try {
+      setLoading(true);
+      console.log('Загрузка данных...');
+      
       let url = '/data/all';
       if (filters) {
         const params = new URLSearchParams();
@@ -95,17 +98,26 @@ const DataTable: React.FC = () => {
         url = `/data/search?${params.toString()}`;
       }
       
+      console.log('URL запроса:', url);
       const response = await api.get(url);
-      const data = Array.isArray(response.data) ? response.data : response.data.data || [];
-      const dataWithIds = data.map((row: DataRow, index: number) => ({
+      console.log('Получены данные:', response.data);
+      
+      // Добавляем id к каждой записи
+      const dataWithIds = response.data.map((row: DataRow, index: number) => ({
         ...row,
         id: index + 1
       }));
+      
       setRows(dataWithIds);
       setError(null);
-    } catch (err) {
-      setError('Ошибка при загрузке данных');
-      console.error('Error fetching data:', err);
+      console.log('Данные успешно загружены');
+    } catch (err: any) {
+      console.error('Ошибка при загрузке данных:', err);
+      if (err.response) {
+        console.error('Ответ сервера:', err.response.status, err.response.data);
+      }
+      setError(err.response?.data?.message || 'Ошибка при загрузке данных');
+      setRows([]);
     } finally {
       setLoading(false);
     }

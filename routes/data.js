@@ -5,20 +5,20 @@ const auth = require('../middleware/auth');
 const { sequelize } = require('sequelize');
 
 // Получение всех данных
-router.get('/', auth, async (req, res) => {
+router.get('/all', auth, async (req, res) => {
     try {
-        console.log('Получение всех данных...');
+        console.log('=== Получение всех данных ===');
+        console.log('Запрос от пользователя:', req.user);
         
         const data = await Сводная.findAll({
             order: [['код_окэд', 'ASC']]
         });
 
-        console.log('Данные получены, количество записей:', data.length);
+        console.log('Данные получены успешно');
+        console.log('Количество записей:', data.length);
+        console.log('Первая запись:', data[0]);
         
-        res.json({
-            message: 'Данные получены успешно',
-            data: data
-        });
+        res.json(data);
     } catch (error) {
         console.error('Ошибка при получении данных:', error);
         res.status(500).json({ 
