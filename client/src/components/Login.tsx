@@ -23,18 +23,52 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('Attempting login with:', { username });
+      console.group('=== Отправка формы входа ===');
+      console.log('Логин:', username);
+      console.log('Длина пароля:', password.length);
+      console.log('Пароль содержит пробелы в начале/конце:', password !== password.trim());
+      
+      // Очищаем пароль от пробелов
+      const cleanPassword = password.trim();
+      
+      console.log('Отправка данных на сервер:', {
+        username,
+        passwordLength: cleanPassword.length
+      });
+
       const response = await api.post('/auth/login', {
         username,
-        password
+        password: cleanPassword
       });
       
-      console.log('Login response:', response.data);
+      console.log('Ответ сервера:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: {
+          ...response.data,
+          token: response.data.token ? 'JWT получен' : 'JWT отсутствует'
+        }
+      });
+
+      if (!response.data.token) {
+        throw new Error('Токен не получен от сервера');
+      }
+
       localStorage.setItem('token', response.data.token);
       onLoginSuccess();
       navigate('/dashboard');
+      console.groupEnd();
     } catch (err: any) {
-      console.error('Login error:', err.response?.data || err.message);
+      console.group('=== Ошибка входа ===');
+      console.error('Детали ошибки:', {
+        message: err.message,
+        response: {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data
+        }
+      });
+      console.groupEnd();
       setError(err.response?.data?.message || 'Неверное имя пользователя или пароль');
     }
   };

@@ -74,10 +74,13 @@ router.post('/register', auth, adminAuth, async (req, res) => {
 // Авторизация
 router.post('/login', async (req, res) => {
     try {
-        console.log('=== Попытка входа ===');
-        console.log('Тело запроса:', { username: req.body.username });
-        
+        console.group('=== Попытка входа ===');
         const { username, password } = req.body;
+        
+        console.log('Данные запроса:', {
+            username,
+            passwordLength: password?.length
+        });
 
         // Находим пользователя
         console.log('Поиск пользователя в базе данных...');
@@ -85,36 +88,53 @@ router.post('/login', async (req, res) => {
         
         if (!user) {
             console.log('Пользователь не найден');
+            console.groupEnd();
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
-        console.log('Пользователь найден:', { username: user.username, role: user.role });
+        console.log('Пользователь найден:', {
+            id: user.id,
+            username: user.username,
+            role: user.role
+        });
 
         // Проверяем, не заблокирован ли пользователь
         if (user.isBlocked) {
             console.log('Пользователь заблокирован');
+            console.groupEnd();
             return res.status(403).json({ message: 'Пользователь заблокирован' });
         }
 
         // Проверяем пароль
         console.log('Проверка пароля...');
         const isValidPassword = await user.validatePassword(password);
+        console.log('Результат проверки пароля:', isValidPassword);
         
         if (!isValidPassword) {
             console.log('Неверный пароль');
+            console.groupEnd();
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
-        console.log('Пароль верный, создаем токен...');
+        console.log('Пароль верный, генерация JWT токена...');
+        
         // Создаем JWT токен
+        const tokenData = {
+            id: user.id,
+            role: user.role
+        };
+        
+        console.log('Данные для токена:', tokenData);
+        
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            tokenData,
             process.env.JWT_SECRET,
             { expiresIn: '12h' }
         );
+        
+        console.log('JWT токен успешно создан');
 
-        console.log('Вход выполнен успешно');
-        res.json({
+        const response = {
             token,
             user: {
                 id: user.id,
@@ -122,9 +142,21 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 role: user.role
             }
+        };
+        
+        console.log('Отправка ответа:', {
+            ...response,
+            token: 'JWT токен (скрыт)'
         });
+        
+        console.log('Вход выполнен успешно');
+        console.groupEnd();
+        
+        res.json(response);
     } catch (error) {
         console.error('Ошибка при авторизации:', error);
+        console.error('Стек ошибки:', error.stack);
+        console.groupEnd();
         res.status(500).json({ message: 'Ошибка при авторизации' });
     }
 });
