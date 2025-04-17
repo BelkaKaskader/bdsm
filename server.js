@@ -16,6 +16,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Healthcheck endpoint
+app.get('/health', async (req, res) => {
+    try {
+        // Проверяем подключение к базе данных
+        await sequelize.authenticate();
+        res.status(200).json({ status: 'healthy', message: 'Server is running and database is connected' });
+    } catch (error) {
+        console.error('Healthcheck failed:', error);
+        res.status(500).json({ status: 'unhealthy', message: 'Database connection failed' });
+    }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);

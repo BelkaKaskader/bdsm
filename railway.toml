@@ -4,7 +4,7 @@ buildCommand = "npm install && npm run install-client && npm run build-client"
 
 [deploy]
 startCommand = "npm start"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckPath = "/health"
+healthcheckTimeout = 180
 restartPolicy = "on-failure"
 numReplicas = 1 
