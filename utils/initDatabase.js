@@ -4,22 +4,66 @@ const path = require('path');
 const XLSX = require('xlsx');
 const { Сводная } = require('../models');
 
-async function initDatabase() {
+async function importExcelData() {
     try {
-        console.log('=== Начало инициализации базы данных ===');
+        console.log('=== Начало импорта данных из Excel ===');
+        const excelPath = path.join(__dirname, '../otchety/data.xlsx');
+        
+        console.log(`Чтение файла: ${excelPath}`);
+        const workbook = XLSX.readFile(excelPath);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Преобразуем в JSON
+        const data = XLSX.utils.sheet_to_json(worksheet);
+        console.log(`Найдено ${data.length} записей в Excel файле`);
 
-        // Сброс и создание таблиц
-        console.log('1. Сброс и создание таблиц...');
-        await sequelize.sync({ force: true });
+        // Очищаем существующие данные
+        await Сводная.destroy({ where: {} });
+        console.log('Существующие данные очищены');
+
+        // Импортируем данные
+        let importedCount = 0;
+        for (const row of data) {
+            if (!row['Код ОКЭД'] || row['Код ОКЭД'] === 'Общий итог') {
+                continue;
+            }
+
+            await Сводная.create({
+                код_окэд: row['Код ОКЭД'],
+                вид_деятельности: row['Вид деятельности'],
+                количество_нп: parseInt(row['Количество НП']) || 0,
+                средняя_численность_работников: row['Средняя численность работников'] || '0',
+                Сумма_по_полю_ФОТт: parseFloat(row['Сумма по полю ФОТ']) || 0,
+                Сумма_по_полю_ср_зп: parseFloat(row['Сумма по полю ср.зп']) || 0,
+                сумма_налогов: parseFloat(row['Сумма налогов']) || 0,
+                удельный_вес: parseFloat(row['Удельный вес %']) || 0
+            });
+            importedCount++;
+        }
+        console.log(`Успешно импортировано ${importedCount} записей`);
+        console.log('=== Импорт данных завершен успешно ===');
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.error('Файл data.xlsx не найден в папке /otchety/');
+        } else {
+            console.error('Ошибка при импорте данных:', error);
+        }
+        throw error;
+    }
+}
+
+async function initAdmin() {
+    try {
+        console.log('=== Начало инициализации администратора ===');
 
         // Создание администратора напрямую
-        console.log('2. Создание администратора...');
+        console.log('Создание администратора...');
         const { User } = require('../models');
         
         // Получаем пароль из .env или используем значение по умолчанию
         const password = process.env.ADMIN_PASSWORD || 'admin123';
         
-        console.log('Создание администратора...');
         console.log('- Пароль:', password);
         
         // Создаем администратора
@@ -47,49 +91,29 @@ async function initDatabase() {
         } else {
             throw new Error('Ошибка создания администратора');
         }
+        
+        console.log('=== Инициализация администратора завершена успешно ===');
+    } catch (error) {
+        console.error('Ошибка при создании администратора:', error);
+        throw error;
+    }
+}
+
+async function initDatabase() {
+    try {
+        console.log('=== Начало инициализации базы данных ===');
+
+        // Сброс и создание таблиц
+        console.log('1. Сброс и создание таблиц...');
+        await sequelize.sync({ force: true });
+
+        // Создание администратора
+        console.log('2. Создание администратора...');
+        await initAdmin();
 
         // Импорт данных из Excel
         console.log('3. Импорт данных из Excel...');
-        const excelPath = path.join(__dirname, '../otchety/data.xlsx');
-        
-        try {
-            console.log(`Чтение файла: ${excelPath}`);
-            const workbook = XLSX.readFile(excelPath);
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            
-            // Преобразуем в JSON
-            const data = XLSX.utils.sheet_to_json(worksheet);
-            console.log(`Найдено ${data.length} записей в Excel файле`);
-
-            // Импортируем данные
-            let importedCount = 0;
-            for (const row of data) {
-                if (!row['Код ОКЭД'] || row['Код ОКЭД'] === 'Общий итог') {
-                    continue;
-                }
-
-                await Сводная.create({
-                    код_окэд: row['Код ОКЭД'],
-                    вид_деятельности: row['Вид деятельности'],
-                    количество_нп: parseInt(row['Количество НП']) || 0,
-                    средняя_численность_работников: row['Средняя численность работников'] || '0',
-                    Сумма_по_полю_ФОТт: parseFloat(row['Сумма по полю ФОТ']) || 0,
-                    Сумма_по_полю_ср_зп: parseFloat(row['Сумма по полю ср.зп']) || 0,
-                    сумма_налогов: parseFloat(row['Сумма налогов']) || 0,
-                    удельный_вес: parseFloat(row['Удельный вес %']) || 0
-                });
-                importedCount++;
-            }
-            console.log(`Успешно импортировано ${importedCount} записей`);
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                console.error('Файл data.xlsx не найден в папке /otchety/');
-            } else {
-                console.error('Ошибка при импорте данных:', error);
-            }
-            throw error;
-        }
+        await importExcelData();
 
         console.log('=== Инициализация базы данных завершена успешно ===');
     } catch (error) {
@@ -98,4 +122,4 @@ async function initDatabase() {
     }
 }
 
-module.exports = initDatabase; 
+module.exports = { initDatabase, importExcelData, initAdmin }; 

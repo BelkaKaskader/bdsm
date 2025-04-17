@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { sequelize } = require('./models');
-const initDatabase = require('./utils/initDatabase');
+const { initDatabase, importExcelData, initAdmin } = require('./utils/initDatabase');
 const fs = require('fs');
 
 // Проверка критических переменных окружения
@@ -106,14 +106,19 @@ async function startServer() {
         // Проверяем существование админа
         const adminExists = await checkAdminExists();
         
-        // Если админа нет, запускаем инициализацию
+        // Если админа нет, создаем его
         if (!adminExists) {
-            console.log('Администратор не найден. Запуск инициализации...');
-            await initDatabase();
-            console.log('Инициализация завершена');
+            console.log('Администратор не найден. Создание администратора...');
+            await initAdmin();
+            console.log('Администратор создан');
         } else {
-            console.log('Администратор уже существует, пропускаем инициализацию');
+            console.log('Администратор уже существует');
         }
+
+        // Всегда импортируем данные из Excel
+        console.log('Импорт данных из Excel...');
+        await importExcelData();
+        console.log('Импорт данных завершен');
 
         // Запуск сервера
         server = app.listen(PORT, () => {
