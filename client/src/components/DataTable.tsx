@@ -113,10 +113,7 @@ const DataTable: React.FC = () => {
       console.log('Данные успешно загружены');
     } catch (err: any) {
       console.error('Ошибка при загрузке данных:', err);
-      if (err.response) {
-        console.error('Ответ сервера:', err.response.status, err.response.data);
-      }
-      setError(err.response?.data?.message || 'Ошибка при загрузке данных');
+      setError('Ошибка при загрузке данных');
       setRows([]);
     } finally {
       setLoading(false);
@@ -145,7 +142,6 @@ const DataTable: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     navigate('/login');
   };
 
