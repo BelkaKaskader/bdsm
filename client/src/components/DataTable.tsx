@@ -14,14 +14,18 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack
 } from '@mui/material';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import DataCharts from './DataCharts';
+import ExportButtons from './ExportButtons';
 
 interface DataRow {
   id: number;
@@ -78,6 +82,7 @@ const DataTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState<FilterValues>(initialFilterValues);
   const [showFilters, setShowFilters] = useState(false);
+  const navigate = useNavigate();
 
   const fetchData = async (filters?: any) => {
     try {
@@ -127,6 +132,11 @@ const DataTable: React.FC = () => {
     setShowFilters(false);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -144,7 +154,40 @@ const DataTable: React.FC = () => {
   }
 
   return (
-    <Box sx={{ height: '100%', width: '100%', p: 2 }}>
+    <Box sx={{ width: '100%', p: 3 }}>
+      <Stack 
+        direction="row" 
+        spacing={2} 
+        alignItems="center" 
+        justifyContent="space-between" 
+        sx={{ mb: 3 }}
+      >
+        <Typography variant="h4">Данные</Typography>
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+        >
+          Выйти
+        </Button>
+      </Stack>
+
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          label="Поиск по коду ОКЭД"
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ width: 200 }}
+        />
+      </Box>
+
+      <ExportButtons 
+        selectedIds={rows.map(row => row.id)} 
+        filter={searchTerm}
+      />
+
       {/* Панель инструментов */}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
