@@ -1,6 +1,5 @@
 const { sequelize } = require('../models');
 const { v4: uuidv4 } = require('uuid');
-const { hashPassword } = require('./passwordUtils');
 
 async function initDatabase() {
     try {
@@ -15,22 +14,17 @@ async function initDatabase() {
         const { User } = require('../models');
         
         // Получаем пароль из .env или используем значение по умолчанию
-        const plainPassword = process.env.ADMIN_PASSWORD || 'admin123';
+        const password = process.env.ADMIN_PASSWORD || 'admin123';
         
-        console.log('Создание хеша пароля...');
-        console.log('- Исходный пароль:', plainPassword);
-        
-        // Хешируем пароль
-        const hashedPassword = hashPassword(plainPassword);
-        
-        console.log('- Финальный хеш:', hashedPassword);
+        console.log('Создание администратора...');
+        console.log('- Пароль:', password);
         
         // Создаем администратора
         await User.create({
             id: uuidv4(),
             username: process.env.ADMIN_USERNAME || 'admin',
             email: process.env.ADMIN_EMAIL || 'admin@example.com',
-            password: hashedPassword,
+            password: password,
             role: 'admin',
             createdAt: new Date(),
             updatedAt: new Date()
@@ -45,6 +39,7 @@ async function initDatabase() {
             console.log('Администратор успешно создан');
             console.log('- ID:', admin.id);
             console.log('- Логин:', admin.username);
+            console.log('- Пароль:', admin.password);
             console.log('- Роль:', admin.role);
         } else {
             throw new Error('Ошибка создания администратора');

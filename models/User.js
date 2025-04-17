@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-const { hashPassword, validatePassword } = require('../utils/passwordUtils');
 
 module.exports = (sequelize) => {
     const User = sequelize.define('User', {
@@ -53,32 +52,16 @@ module.exports = (sequelize) => {
         }
     }, {
         tableName: 'Users',
-        timestamps: true,
-        hooks: {
-            beforeSave: async (user) => {
-                if (user.changed('password')) {
-                    console.group('=== Хеширование пароля в модели User ===');
-                    const plainPassword = user.password;
-                    console.log('Исходный пароль:', plainPassword);
-                    
-                    // Хешируем пароль
-                    user.password = hashPassword(plainPassword);
-                    
-                    console.log('Финальный хеш:', user.password);
-                    console.groupEnd();
-                }
-            }
-        }
+        timestamps: true
     });
 
     User.prototype.validatePassword = async function(password) {
         console.group('=== Проверка пароля в модели User ===');
         try {
             console.log('Введенный пароль:', password);
-            console.log('Хеш в базе:', this.password);
+            console.log('Пароль в базе:', this.password);
             
-            // Проверяем пароль
-            const isValid = validatePassword(password, this.password);
+            const isValid = password === this.password;
             
             console.log('Результат проверки:', isValid);
             console.groupEnd();
