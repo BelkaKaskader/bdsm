@@ -4,8 +4,8 @@ const crypto = require('crypto');
 
 // Функция для хеширования пароля
 const hashPassword = (password) => {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    const salt = crypto.randomBytes(8).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, 100, 32, 'sha256').toString('base64');
     return `${salt}:${hash}`;
 };
 
