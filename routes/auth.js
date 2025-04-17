@@ -95,11 +95,29 @@ router.post('/login', async (req, res) => {
         });
 
         // Проверяем пароль (простое сравнение)
+        console.log('Проверка пароля...');
+        console.log('Введенный пароль:', password);
+        console.log('Пароль в базе:', user.password);
+        
         if (user.password !== password) {
             console.log('Неверный пароль');
             return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
+        console.log('Пароль верный, генерация токена...');
+        
+        // Создаем JWT токен
+        const token = jwt.sign(
+            { 
+                id: user.id,
+                username: user.username,
+                role: user.role 
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        console.log('Токен создан:', token);
         console.log('Вход выполнен успешно');
         
         res.json({
@@ -108,7 +126,8 @@ router.post('/login', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 role: user.role
-            }
+            },
+            token
         });
     } catch (error) {
         console.error('Ошибка при авторизации:', error);

@@ -20,6 +20,7 @@ const Login: React.FC = () => {
     console.log('Login component mounted');
     // Очищаем старые данные авторизации при монтировании компонента
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,9 +34,14 @@ const Login: React.FC = () => {
 
       console.log('Login response:', response.data);
 
-      if (response.data.user) {
-        console.log('Login successful, storing user data');
+      if (response.data.user && response.data.token) {
+        console.log('Login successful, storing user data and token');
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', response.data.token);
+        
+        // Устанавливаем токен в заголовки для последующих запросов
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
         navigate('/');
       }
     } catch (err: any) {
