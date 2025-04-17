@@ -6,6 +6,17 @@ const { sequelize } = require('./models');
 const initDatabase = require('./utils/initDatabase');
 const fs = require('fs');
 
+// Проверка критических переменных окружения
+console.log('=== Проверка переменных окружения ===');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Установлен' : 'Не установлен');
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Установлен' : 'Не установлен');
+
+if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET не установлен!');
+    process.exit(1);
+}
+
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const apiRoutes = require('./routes/api');
