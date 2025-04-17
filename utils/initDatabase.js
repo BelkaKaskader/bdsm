@@ -1,13 +1,6 @@
 const { sequelize } = require('../models');
 const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-
-// Функция для хеширования пароля
-const hashPassword = (password) => {
-    const salt = crypto.randomBytes(8).toString('hex');
-    const hash = crypto.pbkdf2Sync(password, salt, 100, 32, 'sha256').toString('base64');
-    return `${salt}:${hash}`;
-};
+const { hashPassword } = require('./passwordUtils');
 
 async function initDatabase() {
     try {
